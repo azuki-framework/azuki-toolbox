@@ -23,18 +23,26 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.util.List;
 
+import javax.swing.Icon;
 import javax.swing.JFrame;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.UIManager;
+import javax.swing.border.EmptyBorder;
 
+import org.azkfw.business.progress.ProgressEvent;
+import org.azkfw.business.progress.ProgressListener;
+import org.azkfw.business.progress.ProgressSupport;
+import org.azkfw.business.task.Task;
 import org.azkfw.business.task.server.MultiTaskServerAdapter;
 import org.azkfw.business.task.server.MultiTaskServerEvent;
 import org.azkfw.gui.tree.FileExplorerTree;
 import org.azkfw.gui.tree.FileExplorerTreeAdapter;
 import org.azkfw.gui.tree.FileExplorerTreeEvent;
+import org.azkfw.toolbox.support.ToolBoxFileOpen;
 
 /**
  * このクラスは、ツールボックスのメインフレームクラスです。
@@ -59,6 +67,9 @@ public class ToolBoxFrame extends JFrame {
 	private ToolBoxTabbedPane tabMain;
 
 	private FileExplorerTree treeFile;
+
+	private ToolBoxTaskTable tblTask;
+	private ToolBoxTaskTableModel tblMode;
 
 	/**
 	 * コンストラクタ
@@ -86,33 +97,48 @@ public class ToolBoxFrame extends JFrame {
 			@Override
 			public void fileExplorerTreeClickedFile(final FileExplorerTreeEvent event, final File aFile) {
 				if (aFile.isFile()) {
-					tabMain.addTab("Test1", new JPanel());
+					ToolBoxFileOpen execute = ToolBox.getInstance().getFileSupport(aFile);
+					if (null != execute) {
+						execute.openFile(aFile);
+					} else {
+						System.out.println("Not found support plugin.[" + aFile.getName() + "]");
+					}
 				}
+			}
+
+			@Override
+			public List<JMenuItem> fileExplorerTreeMenuFile(final FileExplorerTreeEvent event, final File aFile) {
+				return ToolBox.getInstance().getPopupMenu(aFile);
 			}
 		});
 
-		JScrollPane s = new JScrollPane(treeFile);
-		s.setBorder(null);
-		splitMain.setLeftComponent(s);
+		JScrollPane scrollFile = new JScrollPane(treeFile);
+		scrollFile.setBorder(new EmptyBorder(4, 4, 4, 4));
+		splitMain.setLeftComponent(scrollFile);
 		splitMain.setRightComponent(splitSub);
 
 		tabMain = new ToolBoxTabbedPane();
-		tabMain.addTab("Test1", new JPanel());
-		tabMain.addTab("Test2", UIManager.getIcon("FileView.fileIcon"), new JPanel());
-		tabMain.addTab("Test3", new JPanel());
-		tabMain.addTab("Title4", UIManager.getIcon("FileView.fileIcon"), new JPanel());
-		tabMain.addTab("Title4", UIManager.getIcon("FileView.fileIcon"), new JPanel(), "hint");
+
+		tblMode = new ToolBoxTaskTableModel();
+		tblTask = new ToolBoxTaskTable(tblMode);
+		JScrollPane scrollTask = new JScrollPane(tblTask);
+		scrollTask.setBorder(new EmptyBorder(0, 0, 0, 0));
 
 		splitSub.setTopComponent(tabMain);
-		splitSub.setBottomComponent(new JPanel());
+		splitSub.setBottomComponent(scrollTask);
 
 		ToolBox.getInstance().getServer().addMultiTaskServerListener(new MultiTaskServerAdapter() {
+			@Override
+			public void multiTaskServerQueuedTask(final MultiTaskServerEvent event, final Task aTask) {
+				tblMode.addTask(aTask);
+			}
+
 			@Override
 			public void multiTaskServerStopped(final MultiTaskServerEvent event) {
 				doExit();
 			}
 		});
-		
+
 		// listener
 		addWindowListener(new WindowAdapter() {
 			@Override
@@ -128,6 +154,29 @@ public class ToolBoxFrame extends JFrame {
 		});
 
 		setSize(800, 600);
+	}
+
+	public void addTab(final String aTitle, final JPanel aPanel) {
+		tabMain.addTab(aTitle, aPanel);
+	}
+
+	public void addTab(final String aTitle, final Icon aIcon, final JPanel aPanel, final String aToolTip) {
+		tabMain.addTab(aTitle, aIcon, aPanel, aToolTip);
+	}
+
+	public void queueTask(final Task aTask) {
+		if (aTask instanceof ProgressSupport) {
+			((ProgressSupport) aTask).addProgressListener(new ProgressListener() {
+				@Override
+				public void progress(ProgressEvent event) {
+					if (tblMode.updateTask((Task) event.getSource(), event.getProgress(), event.getMessage())) {
+						tblTask.repaint();
+					}
+				}
+			});
+		}
+
+		ToolBox.getInstance().getServer().queue(aTask);
 	}
 
 	private void doResize() {

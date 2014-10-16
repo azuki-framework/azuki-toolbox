@@ -94,6 +94,8 @@ public class ToolBoxTabbedPane extends JTabbedPane {
 		if (null != aToolTip) {
 			setToolTipTextAt(getTabCount() - 1, aToolTip);
 		}
+
+		setSelectedIndex(getTabCount() - 1);
 	}
 
 	private class TabCloseLabel extends JLabel {

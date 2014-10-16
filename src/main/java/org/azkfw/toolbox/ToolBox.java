@@ -17,9 +17,18 @@
  */
 package org.azkfw.toolbox;
 
-import org.azkfw.business.task.Task;
-import org.azkfw.business.task.TaskServiceException;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JMenuItem;
+
 import org.azkfw.business.task.server.MultiTaskServer;
+import org.azkfw.toolbox.plugin.ImageViewerPlugin;
+import org.azkfw.toolbox.plugin.ToolBoxPlugin;
+import org.azkfw.toolbox.support.ToolBoxFileOpen;
+import org.azkfw.toolbox.support.ToolBoxFileOpenSupport;
+import org.azkfw.toolbox.support.ToolBoxFilePopupMenuSupport;
 
 /**
  * このクラスは、ツールボックスのメインクラスです。
@@ -36,17 +45,100 @@ public class ToolBox {
 	 * @param args 引数
 	 */
 	public static void main(final String[] args) {
-		ToolBoxFrame frm = new ToolBoxFrame();
-		frm.setVisible(true);
+		ToolBox.getInstance().setup();
 	}
 
 	private static final ToolBox INSTANCE = new ToolBox();
 
 	private MultiTaskServer server;
+	private ToolBoxFrame frame;
+	private List<Class<? extends ToolBoxPlugin>> pluginClasses;
+	private List<ToolBoxPlugin> plugins;
 
 	private ToolBox() {
 		server = new MultiTaskServer();
 		server.start();
+
+		pluginClasses = new ArrayList<Class<? extends ToolBoxPlugin>>();
+		plugins = new ArrayList<ToolBoxPlugin>();
+
+		registerPlugins(ImageViewerPlugin.class);
+	}
+
+	public ToolBox registerPlugins(final Class<? extends ToolBoxPlugin>... classes) {
+		for (Class<? extends ToolBoxPlugin> clazz : classes) {
+			try {
+				Object obj = clazz.newInstance();
+				if (obj instanceof ToolBoxPlugin) {
+					pluginClasses.add(clazz);
+					plugins.add((ToolBoxPlugin) obj);
+					System.out.println("Add plugin.[" + clazz.getName() + "]");
+				} else {
+					System.out.println("Unsupported ToolBoxPlugin.[" + clazz.getName() + "]");
+				}
+			} catch (IllegalAccessException ex) {
+				ex.printStackTrace();
+			} catch (InstantiationException ex) {
+				ex.printStackTrace();
+			}
+		}
+		return this;
+	}
+
+	public ToolBoxFileOpen getFileSupport(final File aFile) {
+		ToolBoxFileOpen execute = null;
+
+		for (ToolBoxPlugin plugin : plugins) {
+			if (plugin instanceof ToolBoxFileOpenSupport) {
+				// XXX:微妙
+				plugin.setToolBoxFrame(frame);
+
+				ToolBoxFileOpenSupport support = (ToolBoxFileOpenSupport) plugin;
+
+				if (support.isSupportFileOpen(aFile)) {
+					execute = support;
+					break;
+				}
+			} else {
+				System.out.println("Unsupported file support.");
+			}
+		}
+
+		return execute;
+	}
+
+	public List<JMenuItem> getPopupMenu(final File aFile) {
+		List<JMenuItem> menus = new ArrayList<>();
+
+		for (ToolBoxPlugin plugin : plugins) {
+			if (plugin instanceof ToolBoxFilePopupMenuSupport) {
+				// XXX:微妙
+				plugin.setToolBoxFrame(frame);
+
+				ToolBoxFilePopupMenuSupport support = (ToolBoxFilePopupMenuSupport) plugin;
+
+				if (support.isSupportFilePopupMenu(aFile)) {
+
+					List<JMenuItem> lst = support.pupupMenuFile(aFile);
+					if (null != lst) {
+						menus.addAll(lst);
+					}
+				}
+			} else {
+				System.out.println("Unsupported file support.");
+			}
+		}
+		return menus;
+	}
+
+	public synchronized boolean setup() {
+		boolean result = false;
+		if (null == frame) {
+			frame = new ToolBoxFrame();
+			frame.setVisible(true);
+			result = true;
+		}
+		return result;
 	}
 
 	public static ToolBox getInstance() {
