@@ -62,25 +62,30 @@ public class ToolBox {
 		pluginClasses = new ArrayList<Class<? extends ToolBoxPlugin>>();
 		plugins = new ArrayList<ToolBoxPlugin>();
 
-		registerPlugins(ImageViewerPlugin.class);
+		registerPlugin(ImageViewerPlugin.class);
 	}
 
-	public ToolBox registerPlugins(final Class<? extends ToolBoxPlugin>... classes) {
+	public ToolBox registerPlugins(final Class<? extends ToolBoxPlugin>[] classes) {
 		for (Class<? extends ToolBoxPlugin> clazz : classes) {
-			try {
-				Object obj = clazz.newInstance();
-				if (obj instanceof ToolBoxPlugin) {
-					pluginClasses.add(clazz);
-					plugins.add((ToolBoxPlugin) obj);
-					System.out.println("Add plugin.[" + clazz.getName() + "]");
-				} else {
-					System.out.println("Unsupported ToolBoxPlugin.[" + clazz.getName() + "]");
-				}
-			} catch (IllegalAccessException ex) {
-				ex.printStackTrace();
-			} catch (InstantiationException ex) {
-				ex.printStackTrace();
+			registerPlugin(clazz);
+		}
+		return this;
+	}
+
+	public ToolBox registerPlugin(final Class<? extends ToolBoxPlugin> aClass) {
+		try {
+			Object obj = aClass.newInstance();
+			if (obj instanceof ToolBoxPlugin) {
+				pluginClasses.add(aClass);
+				plugins.add((ToolBoxPlugin) obj);
+				System.out.println("Add plugin.[" + aClass.getName() + "]");
+			} else {
+				System.out.println("Unsupported ToolBoxPlugin.[" + aClass.getName() + "]");
 			}
+		} catch (IllegalAccessException ex) {
+			ex.printStackTrace();
+		} catch (InstantiationException ex) {
+			ex.printStackTrace();
 		}
 		return this;
 	}

@@ -72,7 +72,7 @@ public class ToolBoxTabbedPane extends JTabbedPane {
 		pnlTab.add(label, BorderLayout.CENTER);
 
 		ClassLoader cl = this.getClass().getClassLoader();
-		TabCloseLabel closeLabel = new TabCloseLabel(id, new ImageIcon(cl.getResource("org/azkfw/toolbox/icon_close.gif")));
+		TabCloseLabel closeLabel = new TabCloseLabel(id, new ImageIcon(cl.getResource("org/azkfw/toolbox/toolbox_close.png")));
 		closeLabel.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(final MouseEvent event) {
 				TabCloseLabel close = (TabCloseLabel) event.getSource();
