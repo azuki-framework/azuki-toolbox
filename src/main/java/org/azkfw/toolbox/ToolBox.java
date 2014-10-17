@@ -65,6 +65,13 @@ public class ToolBox {
 		registerPlugin(ImageViewerPlugin.class);
 	}
 
+	public ToolBox registerPlugins(final List<Class<? extends ToolBoxPlugin>> classes) {
+		for (Class<? extends ToolBoxPlugin> clazz : classes) {
+			registerPlugin(clazz);
+		}
+		return this;
+	}
+
 	public ToolBox registerPlugins(final Class<? extends ToolBoxPlugin>[] classes) {
 		for (Class<? extends ToolBoxPlugin> clazz : classes) {
 			registerPlugin(clazz);

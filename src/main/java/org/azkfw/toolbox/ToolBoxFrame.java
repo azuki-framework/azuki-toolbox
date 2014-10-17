@@ -17,12 +17,14 @@
  */
 package org.azkfw.toolbox;
 
+import java.awt.Frame;
 import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import javax.swing.Icon;
@@ -39,6 +41,9 @@ import org.azkfw.business.progress.ProgressSupport;
 import org.azkfw.business.task.Task;
 import org.azkfw.business.task.server.MultiTaskServerAdapter;
 import org.azkfw.business.task.server.MultiTaskServerEvent;
+import org.azkfw.gui.dialog.ConfigurationDialog;
+import org.azkfw.gui.dialog.ConfigurationDialogAdapter;
+import org.azkfw.gui.dialog.ConfigurationDialogEvent;
 import org.azkfw.gui.tree.FileExplorerTree;
 import org.azkfw.gui.tree.FileExplorerTreeAdapter;
 import org.azkfw.gui.tree.FileExplorerTreeEvent;
@@ -164,7 +169,49 @@ public class ToolBoxFrame extends JFrame {
 		tabMain.addTab(aTitle, aIcon, aPanel, aToolTip);
 	}
 
-	public void queueTask(final Task aTask) {
+	public boolean queueTask(final Task aTask) {
+
+		org.azkfw.gui.dialog.annotation.ConfigurationDialog an = aTask.getClass().getAnnotation(
+				org.azkfw.gui.dialog.annotation.ConfigurationDialog.class);
+		if (null != an && null != an.value()) {
+			try {
+				Class<? extends ConfigurationDialog> clazz = (Class<? extends ConfigurationDialog>) an.value();
+				Object obj = clazz.getConstructor(Frame.class, Object.class).newInstance(this, aTask);
+				if (obj instanceof ConfigurationDialog) {
+					ConfigurationDialog dialog = (ConfigurationDialog) obj;
+
+					dialog.addConfigurationDialogListener(new ConfigurationDialogAdapter() {
+						@Override
+						public void configurationDialogOk(final ConfigurationDialogEvent event, final Object data) {
+							executeTask((Task) data);
+						}
+					});
+					dialog.setVisible(true);
+
+					return true;
+				} else {
+					return false;
+				}
+			} catch (NoSuchMethodException ex) {
+				ex.printStackTrace();
+				return false;
+			} catch (InvocationTargetException ex) {
+				ex.printStackTrace();
+				return false;
+			} catch (IllegalAccessException ex) {
+				ex.printStackTrace();
+				return false;
+			} catch (InstantiationException ex) {
+				ex.printStackTrace();
+				return false;
+			}
+		}
+
+		executeTask(aTask);
+		return true;
+	}
+
+	public void executeTask(final Task aTask) {
 		if (aTask instanceof ProgressSupport) {
 			((ProgressSupport) aTask).addProgressListener(new ProgressListener() {
 				@Override
