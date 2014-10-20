@@ -91,9 +91,10 @@ public class ToolBox {
 			if (obj instanceof ToolBoxPlugin) {
 				pluginClasses.add(aClass);
 				plugins.add((ToolBoxPlugin) obj);
-				System.out.println("Add plugin.[" + aClass.getName() + "]");
+				// System.out.println("Add plugin.[" + aClass.getName() + "]");
 			} else {
-				System.out.println("Unsupported ToolBoxPlugin.[" + aClass.getName() + "]");
+				// System.out.println("Unsupported ToolBoxPlugin.[" +
+				// aClass.getName() + "]");
 			}
 		} catch (IllegalAccessException ex) {
 			ex.printStackTrace();
@@ -118,7 +119,7 @@ public class ToolBox {
 					break;
 				}
 			} else {
-				System.out.println("Unsupported file support.");
+				// System.out.println("Unsupported file support.");
 			}
 		}
 
@@ -143,7 +144,7 @@ public class ToolBox {
 					}
 				}
 			} else {
-				System.out.println("Unsupported file support.");
+				// System.out.println("Unsupported file support.");
 			}
 		}
 		return menus;

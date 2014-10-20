@@ -47,6 +47,8 @@ import org.azkfw.gui.dialog.ConfigurationDialogEvent;
 import org.azkfw.gui.tree.FileExplorerTree;
 import org.azkfw.gui.tree.FileExplorerTreeAdapter;
 import org.azkfw.gui.tree.FileExplorerTreeEvent;
+import org.azkfw.toolbox.menu.ToolBoxMenuBar;
+import org.azkfw.toolbox.menu.ToolBoxMenuBarListener;
 import org.azkfw.toolbox.support.ToolBoxFileOpen;
 
 /**
@@ -76,6 +78,12 @@ public class ToolBoxFrame extends JFrame {
 	private ToolBoxTaskTable tblTask;
 	private ToolBoxTaskTableModel tblMode;
 
+	private void doRenderMenu() {
+		menuBar.add("file", "ファイル");
+		// menuBar.add("file/preferences", "環境設定");
+		menuBar.add("file/exit", "終了");
+	}
+
 	/**
 	 * コンストラクタ
 	 */
@@ -84,6 +92,8 @@ public class ToolBoxFrame extends JFrame {
 		setLayout(null);
 
 		menuBar = new ToolBoxMenuBar();
+		doRenderMenu();
+		menuBar.generate();
 		setJMenuBar(menuBar);
 
 		statusBar = new ToolBoxStatusBar();
@@ -106,7 +116,8 @@ public class ToolBoxFrame extends JFrame {
 					if (null != execute) {
 						execute.openFile(aFile);
 					} else {
-						System.out.println("Not found support plugin.[" + aFile.getName() + "]");
+						// System.out.println("Not found support plugin.[" +
+						// aFile.getName() + "]");
 					}
 				}
 			}
@@ -126,7 +137,10 @@ public class ToolBoxFrame extends JFrame {
 
 		tblMode = new ToolBoxTaskTableModel();
 		tblTask = new ToolBoxTaskTable(tblMode);
-		JScrollPane scrollTask = new JScrollPane(tblTask);
+		// JScrollPane scrollTask = new JScrollPane(tblTask);
+		JScrollPane scrollTask = new JScrollPane();
+		scrollTask.setColumnHeader(null);
+		scrollTask.setColumnHeaderView(tblTask);
 		scrollTask.setBorder(new EmptyBorder(0, 0, 0, 0));
 
 		splitSub.setTopComponent(tabMain);
@@ -144,11 +158,27 @@ public class ToolBoxFrame extends JFrame {
 			}
 		});
 
+		menuBar.addToolBoxMenuBarListener(new ToolBoxMenuBarListener() {
+			@Override
+			public void toolBoxMenuBarActionMenuItem(final String aPath) {
+				if ("file/exit".equals(aPath)) {
+					doRequestExit();
+				} else {
+					System.out.println(aPath);
+				}
+			}
+		});
+
 		// listener
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(final WindowEvent event) {
-				ToolBox.getInstance().getServer().stop();
+				doRequestExit();
+			}
+
+			@Override
+			public void windowDeiconified(WindowEvent event) {
+				doResize();
 			}
 		});
 		addComponentListener(new ComponentAdapter() {
@@ -233,6 +263,10 @@ public class ToolBoxFrame extends JFrame {
 
 		splitMain.setBounds(0, 0, width, height - statusBar.getHeight());
 		statusBar.setBounds(0, height - statusBar.getHeight(), width, statusBar.getHeight());
+	}
+
+	private void doRequestExit() {
+		ToolBox.getInstance().getServer().stop();
 	}
 
 	private void doExit() {
