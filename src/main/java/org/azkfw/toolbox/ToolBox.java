@@ -50,6 +50,7 @@ public class ToolBox {
 
 	private static final ToolBox INSTANCE = new ToolBox();
 
+	private String title;
 	private MultiTaskServer server;
 	private ToolBoxFrame frame;
 	private List<Class<? extends ToolBoxPlugin>> pluginClasses;
@@ -63,6 +64,11 @@ public class ToolBox {
 		plugins = new ArrayList<ToolBoxPlugin>();
 
 		registerPlugin(ImageViewerPlugin.class);
+	}
+
+	public ToolBox setTitle(final String aTitle) {
+		title = aTitle;
+		return this;
 	}
 
 	public ToolBox registerPlugins(final List<Class<? extends ToolBoxPlugin>> classes) {
@@ -147,6 +153,7 @@ public class ToolBox {
 		boolean result = false;
 		if (null == frame) {
 			frame = new ToolBoxFrame();
+			frame.setTitle(title);
 			frame.setVisible(true);
 			result = true;
 		}
