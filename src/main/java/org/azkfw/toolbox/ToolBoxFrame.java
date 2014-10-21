@@ -44,6 +44,7 @@ import org.azkfw.business.task.server.MultiTaskServerEvent;
 import org.azkfw.gui.dialog.ConfigurationDialog;
 import org.azkfw.gui.dialog.ConfigurationDialogAdapter;
 import org.azkfw.gui.dialog.ConfigurationDialogEvent;
+import org.azkfw.gui.dialog.PreferenceDialog;
 import org.azkfw.gui.tree.FileExplorerTree;
 import org.azkfw.gui.tree.FileExplorerTreeAdapter;
 import org.azkfw.gui.tree.FileExplorerTreeEvent;
@@ -80,7 +81,7 @@ public class ToolBoxFrame extends JFrame {
 
 	private void doRenderMenu() {
 		menuBar.add("file", "ファイル");
-		// menuBar.add("file/preferences", "環境設定");
+		menuBar.add("file/preferences", "環境設定");
 		menuBar.add("file/exit", "終了");
 	}
 
@@ -104,7 +105,6 @@ public class ToolBoxFrame extends JFrame {
 		splitMain.setBorder(null);
 		getContentPane().add(splitMain);
 		splitSub = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		splitSub.setDividerLocation(420);
 		splitSub.setBorder(null);
 
 		treeFile = new FileExplorerTree();
@@ -161,7 +161,9 @@ public class ToolBoxFrame extends JFrame {
 		menuBar.addToolBoxMenuBarListener(new ToolBoxMenuBarListener() {
 			@Override
 			public void toolBoxMenuBarActionMenuItem(final String aPath) {
-				if ("file/exit".equals(aPath)) {
+				if ("file/preferences".equals(aPath)) {
+					doPreferences();
+				} else if ("file/exit".equals(aPath)) {
 					doRequestExit();
 				} else {
 					System.out.println(aPath);
@@ -188,7 +190,11 @@ public class ToolBoxFrame extends JFrame {
 			}
 		});
 
-		setSize(800, 600);
+		java.awt.GraphicsEnvironment env = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment();
+		java.awt.Rectangle desktopBounds = env.getMaximumWindowBounds();
+		setBounds(desktopBounds);
+
+		splitSub.setDividerLocation(getHeight() / 5 * 4);
 	}
 
 	public void addTab(final String aTitle, final JPanel aPanel) {
@@ -254,6 +260,12 @@ public class ToolBoxFrame extends JFrame {
 		}
 
 		ToolBox.getInstance().getServer().queue(aTask);
+	}
+
+	private void doPreferences() {
+		PreferenceDialog dlg = new PreferenceDialog(this, "環境設定");
+		ToolBox.getInstance().setPreferenceSupport(dlg);
+		dlg.setVisible(true);
 	}
 
 	private void doResize() {

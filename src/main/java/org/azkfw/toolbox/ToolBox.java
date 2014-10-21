@@ -24,11 +24,13 @@ import java.util.List;
 import javax.swing.JMenuItem;
 
 import org.azkfw.business.task.server.MultiTaskServer;
+import org.azkfw.gui.dialog.PreferenceDialog;
 import org.azkfw.toolbox.plugin.ImageViewerPlugin;
 import org.azkfw.toolbox.plugin.ToolBoxPlugin;
 import org.azkfw.toolbox.support.ToolBoxFileOpen;
 import org.azkfw.toolbox.support.ToolBoxFileOpenSupport;
 import org.azkfw.toolbox.support.ToolBoxFilePopupMenuSupport;
+import org.azkfw.toolbox.support.ToolBoxPreferenceSupport;
 
 /**
  * このクラスは、ツールボックスのメインクラスです。
@@ -102,6 +104,21 @@ public class ToolBox {
 			ex.printStackTrace();
 		}
 		return this;
+	}
+
+	public void setPreferenceSupport(final PreferenceDialog aDialog) {
+		for (ToolBoxPlugin plugin : plugins) {
+			if (plugin instanceof ToolBoxPreferenceSupport) {
+				ToolBoxPreferenceSupport support = (ToolBoxPreferenceSupport) plugin;
+
+				List<ToolBoxPreferenceSupport.ToolBoxPreferenceData> datas = support.getPreferenceDataList();
+				if (null != datas) {
+					for (ToolBoxPreferenceSupport.ToolBoxPreferenceData data : datas) {
+						aDialog.addPreference(data.getPath(), data.getTitle(), data.getPanel());
+					}
+				}
+			}
+		}
 	}
 
 	public ToolBoxFileOpen getFileSupport(final File aFile) {
