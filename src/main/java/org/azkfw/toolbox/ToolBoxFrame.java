@@ -17,6 +17,7 @@
  */
 package org.azkfw.toolbox;
 
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
@@ -189,13 +190,13 @@ public class ToolBoxFrame extends JFrame {
 				doResize();
 			}
 		});
-		
+
 		java.awt.GraphicsEnvironment env = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment();
 		java.awt.Rectangle desktopBounds = env.getMaximumWindowBounds();
 		setBounds(desktopBounds);
 
-		setBounds(desktopBounds.x+100, desktopBounds.y+100, desktopBounds.width-200,desktopBounds.height-200);
-		
+		setBounds(desktopBounds.x + 100, desktopBounds.y + 100, desktopBounds.width - 200, desktopBounds.height - 200);
+
 		splitSub.setDividerLocation(getHeight() / 5 * 4);
 	}
 
@@ -213,10 +214,10 @@ public class ToolBoxFrame extends JFrame {
 				org.azkfw.gui.dialog.annotation.ConfigurationDialog.class);
 		if (null != an && null != an.value()) {
 			try {
-				Class<? extends ConfigurationDialog> clazz = (Class<? extends ConfigurationDialog>) an.value();
-				Object obj = clazz.getConstructor(Frame.class, Object.class).newInstance(this, aTask);
+				Class<? extends ConfigurationDialog<?>> clazz = (Class<? extends ConfigurationDialog<?>>) an.value();
+				Object obj = clazz.getConstructor(Frame.class, aTask.getClass()).newInstance(this, aTask);
 				if (obj instanceof ConfigurationDialog) {
-					ConfigurationDialog dialog = (ConfigurationDialog) obj;
+					ConfigurationDialog<?> dialog = (ConfigurationDialog<?>) obj;
 
 					dialog.addConfigurationDialogListener(new ConfigurationDialogAdapter() {
 						@Override
@@ -224,8 +225,12 @@ public class ToolBoxFrame extends JFrame {
 							executeTask((Task) data);
 						}
 					});
-					dialog.setLocationMiddle(this);
 					dialog.setVisible(true);
+
+					Dimension dm = dialog.getPreferredSize();
+
+					dialog.setSize(dm);
+					dialog.setLocationMiddle(this);
 
 					return true;
 				} else {

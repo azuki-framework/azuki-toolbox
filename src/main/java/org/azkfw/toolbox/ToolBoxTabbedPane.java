@@ -46,6 +46,8 @@ public class ToolBoxTabbedPane extends JTabbedPane {
 
 	public ToolBoxTabbedPane() {
 		ids = new ArrayList<String>();
+
+		setBorder(null);
 	}
 
 	public void addTab(final String aTitle, final Component aPanel) {
