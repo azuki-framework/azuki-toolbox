@@ -189,11 +189,13 @@ public class ToolBoxFrame extends JFrame {
 				doResize();
 			}
 		});
-
+		
 		java.awt.GraphicsEnvironment env = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment();
 		java.awt.Rectangle desktopBounds = env.getMaximumWindowBounds();
 		setBounds(desktopBounds);
 
+		setBounds(desktopBounds.x+100, desktopBounds.y+100, desktopBounds.width-200,desktopBounds.height-200);
+		
 		splitSub.setDividerLocation(getHeight() / 5 * 4);
 	}
 
@@ -222,6 +224,7 @@ public class ToolBoxFrame extends JFrame {
 							executeTask((Task) data);
 						}
 					});
+					dialog.setLocationMiddle(this);
 					dialog.setVisible(true);
 
 					return true;
