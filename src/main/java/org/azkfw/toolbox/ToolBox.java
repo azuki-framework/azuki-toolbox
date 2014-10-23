@@ -18,8 +18,15 @@
 package org.azkfw.toolbox;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import javax.swing.JMenuItem;
 
@@ -55,17 +62,41 @@ public class ToolBox {
 	private String title;
 	private MultiTaskServer server;
 	private ToolBoxFrame frame;
-	private List<Class<? extends ToolBoxPlugin>> pluginClasses;
-	private List<ToolBoxPlugin> plugins;
+	private List<Class<? extends ToolBoxPlugin>> pluginList;
+	private Map<Class<? extends ToolBoxPlugin>, ToolBoxPlugin> plugins;
+	private Map<Class<? extends ToolBoxPlugin>, Properties> pluginProperties;
 
 	private ToolBox() {
+		pluginList = new ArrayList<Class<? extends ToolBoxPlugin>>();
+		plugins = new HashMap<Class<? extends ToolBoxPlugin>, ToolBoxPlugin>();
+		pluginProperties = new HashMap<Class<? extends ToolBoxPlugin>, Properties>();
+
+		registerPlugin(ImageViewerPlugin.class);
+	}
+
+	public static ToolBox getInstance() {
+		return INSTANCE;
+	}
+
+	public synchronized boolean setup() {
+		boolean result = false;
+
+		loadData();
+
 		server = new MultiTaskServer();
 		server.start();
 
-		pluginClasses = new ArrayList<Class<? extends ToolBoxPlugin>>();
-		plugins = new ArrayList<ToolBoxPlugin>();
+		if (null == frame) {
+			frame = new ToolBoxFrame();
+			frame.setTitle(title);
+			frame.setVisible(true);
+			result = true;
+		}
+		return result;
+	}
 
-		registerPlugin(ImageViewerPlugin.class);
+	public synchronized void terminate() {
+		storeData();
 	}
 
 	public ToolBox setTitle(final String aTitle) {
@@ -91,8 +122,9 @@ public class ToolBox {
 		try {
 			Object obj = aClass.newInstance();
 			if (obj instanceof ToolBoxPlugin) {
-				pluginClasses.add(aClass);
-				plugins.add((ToolBoxPlugin) obj);
+				pluginList.add(aClass);
+				plugins.put(aClass, (ToolBoxPlugin) obj);
+				pluginProperties.put(aClass, new Properties());
 				// System.out.println("Add plugin.[" + aClass.getName() + "]");
 			} else {
 				// System.out.println("Unsupported ToolBoxPlugin.[" +
@@ -106,8 +138,9 @@ public class ToolBox {
 		return this;
 	}
 
-	public void setPreferenceSupport(final PreferenceDialog aDialog) {
-		for (ToolBoxPlugin plugin : plugins) {
+	public void putPreferenceSupport(final PreferenceDialog aDialog) {
+		for (Class<? extends ToolBoxPlugin> clazz : pluginList) {
+			ToolBoxPlugin plugin = plugins.get(clazz);
 			if (plugin instanceof ToolBoxPreferenceSupport) {
 				ToolBoxPreferenceSupport support = (ToolBoxPreferenceSupport) plugin;
 
@@ -121,10 +154,56 @@ public class ToolBox {
 		}
 	}
 
+	public void loadData() {
+		for (Class<? extends ToolBoxPlugin> clazz : pluginList) {
+			ToolBoxPlugin plugin = plugins.get(clazz);
+			if (plugin instanceof ToolBoxPreferenceSupport) {
+				ToolBoxPreferenceSupport support = (ToolBoxPreferenceSupport) plugin;
+
+				Properties p = pluginProperties.get(plugin.getClass());
+
+				try {
+					File proFile = Paths.get(".", "plugin", plugin.getClass().getName(), "preference.properties").toFile();
+					if (proFile.isFile()) {
+						p.load(new FileInputStream(proFile));
+					}
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+
+				support.load(p);
+			}
+		}
+	}
+
+	public void storeData() {
+		for (Class<? extends ToolBoxPlugin> clazz : pluginList) {
+			ToolBoxPlugin plugin = plugins.get(clazz);
+			if (plugin instanceof ToolBoxPreferenceSupport) {
+				ToolBoxPreferenceSupport support = (ToolBoxPreferenceSupport) plugin;
+
+				Properties p = pluginProperties.get(plugin.getClass());
+
+				support.store(p);
+
+				try {
+					File proFile = Paths.get(".", "plugin", plugin.getClass().getName(), "preference.properties").toFile();
+					File parentDir = proFile.getParentFile();
+					parentDir.mkdirs();
+
+					p.store(new FileOutputStream(proFile), null);
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+			}
+		}
+	}
+
 	public ToolBoxFileOpen getFileSupport(final File aFile) {
 		ToolBoxFileOpen execute = null;
 
-		for (ToolBoxPlugin plugin : plugins) {
+		for (Class<? extends ToolBoxPlugin> clazz : pluginList) {
+			ToolBoxPlugin plugin = plugins.get(clazz);
 			if (plugin instanceof ToolBoxFileOpenSupport) {
 				// XXX:微妙
 				plugin.setToolBoxFrame(frame);
@@ -146,7 +225,8 @@ public class ToolBox {
 	public List<JMenuItem> getPopupMenu(final File aFile) {
 		List<JMenuItem> menus = new ArrayList<>();
 
-		for (ToolBoxPlugin plugin : plugins) {
+		for (Class<? extends ToolBoxPlugin> clazz : pluginList) {
+			ToolBoxPlugin plugin = plugins.get(clazz);
 			if (plugin instanceof ToolBoxFilePopupMenuSupport) {
 				// XXX:微妙
 				plugin.setToolBoxFrame(frame);
@@ -167,19 +247,8 @@ public class ToolBox {
 		return menus;
 	}
 
-	public synchronized boolean setup() {
-		boolean result = false;
-		if (null == frame) {
-			frame = new ToolBoxFrame();
-			frame.setTitle(title);
-			frame.setVisible(true);
-			result = true;
-		}
-		return result;
-	}
-
-	public static ToolBox getInstance() {
-		return INSTANCE;
+	public ToolBoxPlugin getPlugin(final Class<? extends ToolBoxPlugin> aClass) {
+		return plugins.get(aClass);
 	}
 
 	public MultiTaskServer getServer() {

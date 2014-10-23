@@ -17,7 +17,6 @@
  */
 package org.azkfw.toolbox;
 
-import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
@@ -46,6 +45,8 @@ import org.azkfw.gui.dialog.ConfigurationDialog;
 import org.azkfw.gui.dialog.ConfigurationDialogAdapter;
 import org.azkfw.gui.dialog.ConfigurationDialogEvent;
 import org.azkfw.gui.dialog.PreferenceDialog;
+import org.azkfw.gui.dialog.PreferenceDialogAdapter;
+import org.azkfw.gui.dialog.PreferenceDialogEvent;
 import org.azkfw.gui.tree.FileExplorerTree;
 import org.azkfw.gui.tree.FileExplorerTreeAdapter;
 import org.azkfw.gui.tree.FileExplorerTreeEvent;
@@ -79,12 +80,6 @@ public class ToolBoxFrame extends JFrame {
 
 	private ToolBoxTaskTable tblTask;
 	private ToolBoxTaskTableModel tblMode;
-
-	private void doRenderMenu() {
-		menuBar.add("file", "ファイル");
-		menuBar.add("file/preferences", "環境設定");
-		menuBar.add("file/exit", "終了");
-	}
 
 	/**
 	 * コンストラクタ
@@ -163,7 +158,7 @@ public class ToolBoxFrame extends JFrame {
 			@Override
 			public void toolBoxMenuBarActionMenuItem(final String aPath) {
 				if ("file/preferences".equals(aPath)) {
-					doPreferences();
+					doOpenPreferenceDialog();
 				} else if ("file/exit".equals(aPath)) {
 					doRequestExit();
 				} else {
@@ -181,13 +176,13 @@ public class ToolBoxFrame extends JFrame {
 
 			@Override
 			public void windowDeiconified(WindowEvent event) {
-				doResize();
+				doResizeWindow();
 			}
 		});
 		addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(final ComponentEvent event) {
-				doResize();
+				doResizeWindow();
 			}
 		});
 
@@ -225,11 +220,9 @@ public class ToolBoxFrame extends JFrame {
 							executeTask((Task) data);
 						}
 					});
+
+					// XXX: insets取得の為、先に表示
 					dialog.setVisible(true);
-
-					Dimension dm = dialog.getPreferredSize();
-
-					dialog.setSize(dm);
 					dialog.setLocationMiddle(this);
 
 					return true;
@@ -270,13 +263,26 @@ public class ToolBoxFrame extends JFrame {
 		ToolBox.getInstance().getServer().queue(aTask);
 	}
 
-	private void doPreferences() {
+	private void doRenderMenu() {
+		menuBar.add("file", "ファイル");
+		menuBar.add("file/preferences", "環境設定");
+		menuBar.add("file/exit", "終了");
+	}
+
+	private void doOpenPreferenceDialog() {
 		PreferenceDialog dlg = new PreferenceDialog(this, "環境設定");
-		ToolBox.getInstance().setPreferenceSupport(dlg);
+		ToolBox.getInstance().putPreferenceSupport(dlg);
+
+		dlg.addPreferenceDialogListener(new PreferenceDialogAdapter() {
+			public void preferenceDialogStored(final PreferenceDialogEvent event) {
+				ToolBox.getInstance().storeData();
+			}
+		});
+
 		dlg.setVisible(true);
 	}
 
-	private void doResize() {
+	private void doResizeWindow() {
 		Insets insets = getInsets();
 		int width = getWidth() - (insets.left + insets.right);
 		int height = getHeight() - (insets.top + menuBar.getHeight() + insets.bottom);
@@ -290,6 +296,8 @@ public class ToolBoxFrame extends JFrame {
 	}
 
 	private void doExit() {
+		ToolBox.getInstance().terminate();
+
 		setVisible(false);
 		dispose();
 	}
