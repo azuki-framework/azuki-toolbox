@@ -134,9 +134,9 @@ public class ToolBoxFrame extends JFrame {
 		tblMode = new ToolBoxTaskTableModel();
 		tblTask = new ToolBoxTaskTable(tblMode);
 		// JScrollPane scrollTask = new JScrollPane(tblTask);
-		JScrollPane scrollTask = new JScrollPane();
-		scrollTask.setColumnHeader(null);
-		scrollTask.setColumnHeaderView(tblTask);
+		JScrollPane scrollTask = new JScrollPane(tblTask);
+		//scrollTask.setColumnHeader(null);
+		//scrollTask.setColumnHeaderView(tblTask);
 		scrollTask.setBorder(new EmptyBorder(0, 0, 0, 0));
 
 		splitSub.setTopComponent(tabMain);
