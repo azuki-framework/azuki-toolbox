@@ -135,8 +135,8 @@ public class ToolBoxFrame extends JFrame {
 		tblTask = new ToolBoxTaskTable(tblMode);
 		// JScrollPane scrollTask = new JScrollPane(tblTask);
 		JScrollPane scrollTask = new JScrollPane(tblTask);
-		//scrollTask.setColumnHeader(null);
-		//scrollTask.setColumnHeaderView(tblTask);
+		// scrollTask.setColumnHeader(null);
+		// scrollTask.setColumnHeaderView(tblTask);
 		scrollTask.setBorder(new EmptyBorder(0, 0, 0, 0));
 
 		splitSub.setTopComponent(tabMain);
@@ -146,6 +146,20 @@ public class ToolBoxFrame extends JFrame {
 			@Override
 			public void multiTaskServerQueuedTask(final MultiTaskServerEvent event, final Task aTask) {
 				tblMode.addTask(aTask);
+			}
+
+			@Override
+			public void multiTaskServerStartedTask(final MultiTaskServerEvent event, final Task aTask) {
+				if (tblMode.startTask(aTask)) {
+					tblTask.repaint();
+				}
+			}
+
+			@Override
+			public void multiTaskServerStoppedTask(final MultiTaskServerEvent event, final Task aTask) {
+				if (tblMode.stopTask(aTask)) {
+					tblTask.repaint();
+				}
 			}
 
 			@Override

@@ -36,7 +36,6 @@ public class ToolBoxTaskTable extends CustomTable {
 	 */
 	public ToolBoxTaskTable(final DefaultTableModel model) {
 		super(model);
-		
 		setRowHeight(14);
 	}
 
