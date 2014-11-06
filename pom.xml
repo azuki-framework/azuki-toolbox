@@ -18,7 +18,7 @@
 
 	<groupId>org.azkfw</groupId>
 	<artifactId>azuki-toolbox</artifactId>
-	<version>0.4.0-SNAPSHOT</version>
+	<version>0.4.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>azuki-toolbox</name>
@@ -52,7 +52,7 @@
 		<dependency>
 			<groupId>org.azkfw</groupId>
 			<artifactId>azuki-gui</artifactId>
-			<version>0.4.0-SNAPSHOT</version>
+			<version>0.4.1-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
